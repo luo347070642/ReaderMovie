@@ -25,7 +25,24 @@ function convertToStarsArray(stars) {
   return array;
 }
 
+function http(url, callback) {
+  wx.request({
+    url: url,
+    method: 'GET',
+    header: {
+      "Content-Type": "application/json"
+    },
+    success: function(res) {
+      callback(res.data);
+    },
+    fail: function() {
+      console.error("failed");
+    }
+  });
+}
+
 module.exports = {
   convertEnpty: convertEnpty,
-	convertToStarsArray:convertToStarsArray
+	convertToStarsArray:convertToStarsArray,
+  http: http
 }
