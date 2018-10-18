@@ -2,8 +2,11 @@ var util = require("../../../util/util.js");
 var app = getApp();
 Page({
   data: {
-    movies:{},
-    navigateTitle: ""
+    movies: {},
+    navigateTitle: "",
+    totalCount: 0,
+    redirectUrl: "",
+    isEmpty: true
   },
   onLoad: function(options) {
     var category = options.category;
@@ -22,9 +25,29 @@ Page({
         dataUrl = app.globalData.g_doubanBase + "/v2/movie/top250";
         break;
     }
+    this.setData({
+      redirectUrl: dataUrl
+    });
     util.http(dataUrl, this.processDouBanData);
   },
-  processDouBanData:function(data){
+  onPullDownRefresh: function(event) {
+    var refreshUrl = this.data.redirectUrl + "?start=0&count=20";
+    this.setData({
+      isEmpty: true,
+      movies: [],
+      totalCount: 0
+    });
+    util.http(refreshUrl, this.processDouBanData);
+    wx.showNavigationBarLoading();
+  },
+  onScrollLower: function(event) {
+    var nextUrl = this.data.redirectUrl +
+      "?start=" + this.data.totalCount +
+      "&count=20";
+    util.http(nextUrl, this.processDouBanData);
+    wx.showNavigationBarLoading();
+  },
+  processDouBanData: function(data) {
     var movies = [];
     for (let idx in data.subjects) {
       var subject = data.subjects[idx];
@@ -32,7 +55,6 @@ Page({
       if (title.length > 6) {
         title = title.substring(0, 6) + "...";
       }
-
       var temp = {
         stars: util.convertToStarsArray(subject.rating.stars),
         title: title,
@@ -42,7 +64,23 @@ Page({
       }
       movies.push(temp);
     }
-    this.setData({ movies: movies});
+    var totalMovies = {};
+    if (!this.data.isEmpty) {
+      totalMovies = this.data.movies.concat(movies);
+    } else {
+      totalMovies = movies;
+      this.data.isEmpty = false;
+      this.setData({
+        isEmpty: false
+      });
+    }
+    var totalCount = this.data.totalCount + 20;
+    this.setData({
+      movies: totalMovies,
+      totalCount: totalCount
+    });
+    wx.hideNavigationBarLoading();
+    wx.stopPullDownRefresh();
   },
   onReady: function(event) {
     wx.setNavigationBarTitle({

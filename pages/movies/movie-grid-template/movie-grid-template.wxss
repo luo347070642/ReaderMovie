@@ -2,6 +2,7 @@
 
 .grid-container{
   margin: 40rpx 0 40rpx 8rpx;
+  height: 1300rpx;
 }
 .single-view-container{
   float: left;
